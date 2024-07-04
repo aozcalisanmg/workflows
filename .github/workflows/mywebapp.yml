@@ -52,6 +52,14 @@ jobs:
         run: |
           cd charts
           sed -i '' 's/tag: .*/tag: "${{ github.sha }}"/' myapp-chart/values.yaml
+          
+          version=$(grep '^version:' myapp-chart/Chart.yaml | cut -d ' ' -f 2)
+          appVersion=$(grep '^appVersion:' myapp-chart/Chart.yaml | cut -d '"' -f 2)
+          newVersion=$(echo $version | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')
+          newAppVersion=$(echo $appVersion | awk -F. '{printf "%d.%d.%d", $1, $2, $3+1}')
+          sed -i '' "s/^version:.*/version: $newVersion/" myapp-chart/Chart.yaml
+          sed -i '' "s/^appVersion:.*/appVersion: \"$newAppVersion\"/" myapp-chart/Chart.yaml
+          
           git add myapp-chart/values.yaml
           git commit -m "Update image tag to ${{ github.sha }}"
           git push origin main
