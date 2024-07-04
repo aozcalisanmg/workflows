@@ -12,7 +12,8 @@ jobs:
     steps:
       - name: Cleanup workspace
         run: |
-          sudo rm -rf ${GITHUB_WORKSPACE}/*
+          rm -rf ${GITHUB_WORKSPACE}/*
+          mkdir -p ${GITHUB_WORKSPACE}/ci-workdir
           
       - name: Checkout Workflows repository
         uses: actions/checkout@v2
@@ -70,3 +71,6 @@ jobs:
       - name: Sync ArgoCD application
         run: |
           argocd app sync myapp
+
+      - name: Cleanup working directory
+        run: rm -rf ${GITHUB_WORKSPACE}/ci-workdir             
