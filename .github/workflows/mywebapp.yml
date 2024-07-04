@@ -53,7 +53,7 @@ jobs:
       - name: Update Helm chart
         run: |
           cd charts
-          sed -i 's/tag: .*/tag: \"${{ github.sha }}\"/' myapp-chart/values.yaml
+          sed -i '' 's/tag: .*/tag: "${{ github.sha }}"/' myapp-chart/values.yaml
           git add myapp-chart/values.yaml
           git commit -m "Update image tag to ${{ github.sha }}"
 
