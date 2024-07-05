@@ -34,7 +34,7 @@ jobs:
       - name: Build and push Docker image
         run: |
           cd mywebapp
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }} .
+          docker build --pull -t ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }} . --no-cache  
           docker push ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }}
 
       - name: Run Trivy vulnerability scan
