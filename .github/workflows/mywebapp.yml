@@ -88,7 +88,7 @@ jobs:
       - name: Sync ArgoCD application
         run: |
           argocd app set myapp --helm-set image.tag=${{ github.sha }}        
-          argocd app sync myapp-development --force --prune --replace
+          argocd app sync myapp --force --prune --replace
           
       - name: Cleanup working directory
         run: rm -rf ${GITHUB_WORKSPACE}/ci-workdir    
