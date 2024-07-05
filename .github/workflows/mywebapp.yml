@@ -4,7 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  BuildAndPush:
+    name: BuildAndPush
     runs-on: mg-runner
 
     steps:
@@ -24,7 +25,6 @@ jobs:
           git clone https://github.com/aozcalisanmg/mywebapp.git
           cd mywebapp
           git checkout main
-
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
@@ -37,17 +37,27 @@ jobs:
           docker build --pull -t ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }} . --no-cache  
           docker push ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }}
 
+  Security:
+    name: Security
+    runs-on: mg-runner
+
+    steps:          
       - name: Run Trivy vulnerability scan
         run: |
           trivy image ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }}
         continue-on-error: true
 
+
+  UpdatingHelmChart:
+    name: UpdatingHelmChart
+    runs-on: mg-runner
+
+    steps:  
       - name: Clone Charts repository
         run: |
           git clone https://github.com/aozcalisanmg/charts.git
           cd charts
           git checkout main
-
       - name: Update Helm chart
         run: |
           cd charts
@@ -64,15 +74,18 @@ jobs:
           git commit -m "Update image tag to ${{ github.sha }}"
           git push origin main
 
+  ArgocdSyncApp:
+    name: ArgocdSyncApp
+    runs-on: mg-runner
+
+    steps:  
       - name: Login to ArgoCD
         run: |
           argocd login localhost:8080 --username admin --password ${{ secrets.ARGOCD_PASSWORD }} --insecure
-
       - name: Sync ArgoCD application
         run: |
           argocd app set myapp --helm-set image.tag=${{ github.sha }}        
           argocd app sync myapp
           
-
       - name: Cleanup working directory
-        run: rm -rf ${GITHUB_WORKSPACE}/ci-workdir             
+        run: rm -rf ${GITHUB_WORKSPACE}/ci-workdir    
