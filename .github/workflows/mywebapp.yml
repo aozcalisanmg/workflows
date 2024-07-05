@@ -40,6 +40,7 @@ jobs:
   Security:
     name: Security
     runs-on: mg-runner
+    needs: BuildAndPush
 
     steps:          
       - name: Run Trivy vulnerability scan
@@ -51,6 +52,7 @@ jobs:
   UpdatingHelmChart:
     name: UpdatingHelmChart
     runs-on: mg-runner
+    needs: Security    
 
     steps:  
       - name: Clone Charts repository
@@ -77,6 +79,7 @@ jobs:
   ArgocdSyncApp:
     name: ArgocdSyncApp
     runs-on: mg-runner
+    needs: UpdatingHelmChart       
 
     steps:  
       - name: Login to ArgoCD
