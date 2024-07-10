@@ -1,0 +1,40 @@
+name: Deploy Project Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Kubernetes namespace to deploy'
+        required: true
+        default: 'default'
+
+jobs:
+  DeployInfrastructure:
+    name: Deploy Infrastructure
+    runs-on: mg-runner
+
+    steps:
+      - name: Cleanup workspace
+        run: |
+          rm -rf ${GITHUB_WORKSPACE}/*
+          mkdir -p ${GITHUB_WORKSPACE}/ci-workdir
+
+      - name: Clone Charts repository
+        run: |
+          git clone https://github.com/aozcalisanmg/charts.git
+          cd charts
+          git checkout main
+
+      - name: Update Helm dependencies
+        run: |
+          cd charts/project-infrastructure
+          helm dependency update
+
+      - name: Deploy Umbrella Chart
+        run: |
+          helm upgrade --install project-infra ./charts/project-infrastructure \
+            --namespace ${{ github.event.inputs.namespace }} \
+            --create-namespace
+
+      - name: Cleanup working directory
+        run: rm -rf ${GITHUB_WORKSPACE}/ci-workdir
