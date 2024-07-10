@@ -34,8 +34,8 @@ jobs:
       - name: Build and push Docker image
         run: |
           cd mywebapp
-          docker build --pull -t ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }} . --no-cache  
-          docker push ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }}
+          docker build --pull -t ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.run_number }} . --no-cache  
+          docker push ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.run_number }}
 
   Security:
     name: Security
@@ -45,7 +45,7 @@ jobs:
     steps:          
       - name: Run Trivy vulnerability scan
         run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.sha }}
+          trivy image ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.run_number }}
         continue-on-error: true
 
 
@@ -63,7 +63,7 @@ jobs:
       - name: Update Helm chart
         run: |
           cd charts
-          sed -i '' 's/tag: .*/tag: "${{ github.sha }}"/' myapp-chart/values.yaml
+          sed -i '' 's/tag: .*/tag: "${{ github.run_number }}"/' myapp-chart/values.yaml
           
           version=$(grep '^version:' myapp-chart/Chart.yaml | cut -d ' ' -f 2)
           appVersion=$(grep '^appVersion:' myapp-chart/Chart.yaml | cut -d '"' -f 2)
@@ -73,7 +73,7 @@ jobs:
           sed -i '' "s/^appVersion:.*/appVersion: \"$newAppVersion\"/" myapp-chart/Chart.yaml
           
           git add myapp-chart/values.yaml myapp-chart/Chart.yaml
-          git commit -m "Update image tag to ${{ github.sha }}"
+          git commit -m "Update image tag to ${{ github.run_number }}"
           git push origin main
 
   ArgocdSyncApp:
@@ -87,7 +87,7 @@ jobs:
           argocd login localhost:8080 --username admin --password ${{ secrets.ARGOCD_PASSWORD }} --insecure
       - name: Sync ArgoCD application
         run: |
-          argocd app set myapp --helm-set image.tag=${{ github.sha }}        
+          argocd app set myapp --helm-set image.tag=${{ github.run_number }}        
           argocd app sync myapp --force --prune --replace
           
       - name: Cleanup working directory
