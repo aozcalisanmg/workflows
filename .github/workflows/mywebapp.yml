@@ -3,6 +3,11 @@ name: CI/CD Pipeline
 on: 
   workflow_dispatch:
 
+env:
+  APP_REPO: mywebapp
+  GIT_USER: aozcalisanmg
+  CHART_REPO: charts
+
 jobs:
   BuildAndPush:
     name: BuildAndPush
@@ -17,13 +22,13 @@ jobs:
       - name: Checkout Workflows repository
         uses: actions/checkout@v2
         with:
-          repository: aozcalisanmg/workflows
+          repository: ${{ env.GIT_USER }}/workflows
           path: workflows
 
       - name: Clone Mywebapp repository
         run: |
-          git clone https://github.com/aozcalisanmg/mywebapp.git
-          cd mywebapp
+          git clone https://github.com/${{ env.GIT_USER }}/${{ env.APP_REPO }}.git
+          cd ${{ env.APP_REPO }}
           git checkout main
       - name: Login to DockerHub
         uses: docker/login-action@v1
@@ -33,9 +38,9 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          cd mywebapp
-          docker build --pull -t ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.run_number }} . --no-cache  
-          docker push ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.run_number }}
+          cd ${{ env.APP_REPO }}
+          docker build --pull -t ${{ secrets.DOCKER_USERNAME }}/${{ env.APP_REPO }}:${{ github.run_number }} . --no-cache  
+          docker push ${{ secrets.DOCKER_USERNAME }}/${{ env.APP_REPO }}:${{ github.run_number }}
 
   Security:
     name: Security
@@ -45,7 +50,7 @@ jobs:
     steps:          
       - name: Run Trivy vulnerability scan
         run: |
-          trivy image ${{ secrets.DOCKER_USERNAME }}/mywebapp:${{ github.run_number }}
+          trivy image ${{ secrets.DOCKER_USERNAME }}/${{ env.APP_REPO }}:${{ github.run_number }}
         continue-on-error: true
 
 
@@ -57,12 +62,12 @@ jobs:
     steps:  
       - name: Clone Charts repository
         run: |
-          git clone https://github.com/aozcalisanmg/charts.git
-          cd charts
+          git clone https://github.com/${{ env.GIT_USER }}/${{ env.CHART_REPO }}.git
+          cd ${{ env.CHART_REPO }}
           git checkout main
       - name: Update Helm chart
         run: |
-          cd charts
+          cd ${{ env.CHART_REPO }}
           sed -i '' 's/tag: .*/tag: "${{ github.run_number }}"/' myapp-chart/values.yaml
           
           version=$(grep '^version:' myapp-chart/Chart.yaml | cut -d ' ' -f 2)
