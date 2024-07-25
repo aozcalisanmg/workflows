@@ -1,0 +1,38 @@
+pool:
+  name: BE
+
+variables:
+  ORGANIZATION_NAME: 'migrosdevelopment'
+  PROJECT_NAME: 'Helm-Argocd-Demo'
+  APPLICATION_NAME: 'mywebapp'
+  IMAGEENV: 'dev'
+  SERVICE_NAME: 'helmdemo'
+  DOCKER_REGISTRY_SERVICE_CONNECTION: 'Harbor-Prod-Stage'
+  CHART_REPO_NAME: 'charts'
+
+trigger:
+  - main
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildAndPackage
+    steps:
+    - task: Bash@3
+      displayName: 'Clone Application Repository'
+      inputs:
+        targetType: 'inline'
+        script: |
+          REPO_URL="https://devops.migros.com.tr/Migros/$(PROJECT_NAME)/_git/$(APPLICATION_NAME)"
+          echo "Repository URL: $REPO_URL"
+          git clone $REPO_URL
+     
+
+    - task: Docker@2
+      displayName: 'Build and Push Docker Image'
+      inputs:
+        containerRegistry: $(DOCKER_REGISTRY_SERVICE_CONNECTION)
+        repository: '$(IMAGEENV)/$(APPLICATION_NAME)'
+        command: 'buildAndPush'
+        Dockerfile: '$(APPLICATION_NAME)/Dockerfile'
+        tags: '$(Build.BuildNumber)'        
